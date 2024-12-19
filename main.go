@@ -58,6 +58,7 @@ func main() {
 	app.Post("/login", loginHandler)
 	app.Post("/Signup",SignupHandler)
 	app.Get("/protected", authenticateJWT, protectedHandler)
+	app.Put("/update", authenticateJWT, updateHandler)
 
 
 	app.Listen(":3000")
@@ -78,19 +79,25 @@ func SignupHandler(c *fiber.Ctx)error{
     }
 	query := "INSERT INTO users (id, username, password) VALUES (?, ?, ?)"
 	
-	_, err := db.Exec(query, req.ID, req.Username, req.Password)
+	result, err := db.Exec(query, req.ID, req.Username, req.Password)
     if err != nil {
         return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
             "error": "Failed to save user to the database",
             "details": err.Error(),
         })
     }
-
+    insertID,err:=result.LastInsertId()
+	if err!= nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "error": "Failed to get last insert ID",
+            "details": err.Error(),
+        })
+	}
     // return c.Status(fiber.StatusCreated).JSON(fiber.Map{
     //     "message": "User signed up successfully",
     // })
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": req.ID,
+		"user_id": insertID,
 		"exp":     time.Now().Add(time.Minute * 30).Unix(),
 	})
 	   signedToken, err := token.SignedString([]byte(secretKey))
@@ -199,4 +206,33 @@ func authenticateJWT(c *fiber.Ctx) error {
 		"message": "Welcome to the protected route!",
 		"user":    user,
 	})
+}
+
+func updateHandler(c *fiber.Ctx) error {
+	claims := c.Locals("user").(jwt.MapClaims)
+    userID := claims["user_id"].(float64)
+	var req User
+	if err := c.BodyParser(&req); err!= nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": "Invalid request",
+        })
+    }
+	if req.Username == "" && req.Password == "" {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": "At least one field (username or password) must be provided",
+        })
+    }
+	query := "UPDATE users SET username=?, password=? WHERE id=?"
+	_, err := db.Exec(query, req.Username, req.Password, userID)
+	if err!= nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "error": "Failed to update user in the database",
+            "details": err.Error(),
+        })
+	}
+	return c.JSON(fiber.Map{
+        "message": "User updated successfully",
+		"user_id": userID,
+		"claims": claims,
+    })
 }
