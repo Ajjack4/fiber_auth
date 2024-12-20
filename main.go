@@ -59,7 +59,7 @@ func main() {
 	app.Post("/Signup",SignupHandler)
 	app.Get("/protected", authenticateJWT, protectedHandler)
 	app.Put("/update", authenticateJWT, updateHandler)
-
+    app.Delete("/delete",authenticateJWT, deleteHandler)
 
 	app.Listen(":3000")
 }
@@ -234,5 +234,21 @@ func updateHandler(c *fiber.Ctx) error {
         "message": "User updated successfully",
 		"user_id": userID,
 		"claims": claims,
+    })
+}
+
+func deleteHandler(c *fiber.Ctx) error {
+	claims := c.Locals("user").(jwt.MapClaims)
+    userID := claims["user_id"].(float64)
+    query := "DELETE FROM users WHERE id=?"
+    _, err := db.Exec(query, userID)
+    if err!= nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "error": "Failed to delete user from the database",
+            "details": err.Error(),
+        })
+    }
+    return c.JSON(fiber.Map{
+        "message": "User deleted successfully",
     })
 }
