@@ -23,7 +23,7 @@ func main() {
 	// Routes
 	app.Post("/login", handlers.LoginHandler)
 	app.Post("/signup", handlers.SignupHandler)
-	app.Get("/protected", middlewares.AuthenticateJWT, handlers.ProtectedHandler)
+	// app.Get("/protected", middlewares.AuthenticateJWT, handlers.ProtectedHandler)
 	app.Put("/update", middlewares.AuthenticateJWT, handlers.UpdateHandler)
 	app.Delete("/delete", middlewares.AuthenticateJWT, handlers.DeleteHandler)
 
