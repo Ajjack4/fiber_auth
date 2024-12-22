@@ -93,9 +93,7 @@ func SignupHandler(c *fiber.Ctx)error{
             "details": err.Error(),
         })
 	}
-    // return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-    //     "message": "User signed up successfully",
-    // })
+   
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": insertID,
 		"exp":     time.Now().Add(time.Minute * 30).Unix(),
@@ -112,17 +110,7 @@ func SignupHandler(c *fiber.Ctx)error{
 	})
 
 
-	// var user User
-	// if err:=c.BodyParser(&user);err!=nil{
-	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-    //         "error": "Invalid request",
-    //     })
-	// }
-	// err:= db.QueryRow("SELECT id,username,password FROM users WHERE username=?",user.Username)
-    // if err== nil {
-	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error":"User Already Exists"})
-	// }
-	// return nil
+
 }
 
 func loginHandler(c *fiber.Ctx) error {
@@ -133,8 +121,7 @@ func loginHandler(c *fiber.Ctx) error {
 		})
 	}
 
-    // var user User
-	// err:= db.QueryRow("SELECT id,username,password FROM users WHERE username=?",req.username)
+
 	var user User
 	err:= db.QueryRow("SELECT id,username,password FROM users WHERE username=?",req.Username).Scan(&user.ID, &user.Username, &user.Password)
 	if err != nil {
@@ -152,11 +139,7 @@ func loginHandler(c *fiber.Ctx) error {
             "error": "Invalid credentials",
         })
     }
-	// if req.Username != mockUser.Username || req.Password != mockUser.Password {
-	// 	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-	// 		"error": "Invalid credentials",
-	// 	})
-	// }
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.ID,
 		"exp":     time.Now().Add(time.Minute * 30).Unix(),
